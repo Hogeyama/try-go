@@ -1,0 +1,336 @@
+## yaml-language-server: $schema=https://raw.githubusercontent.com/OAI/OpenAPI-Specification/546f32946d8bf0510227a40ca598475b4a0ee082/schemas/v3.0/schema.yaml
+openapi: "3.0.0"
+
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  description: A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification
+  termsOfService: https://swagger.io/terms/
+  contact:
+    name: Swagger API Team
+    email: apiteam@swagger.io
+    url: https://swagger.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://petstore.swagger.io/api
+
+x-anchors:
+  roles:
+    SysAdmin: &SysAdminRequired
+      CookieAuth:
+        - sysadmin
+    Admin: &AdminRequired
+      - CookieAuth:
+          - sysadmin
+          - admin
+    Writer: &WriterRequired
+      - CookieAuth:
+          - sysadmin
+          - admin
+          - writer
+    Reader: &ReaderRequired
+      - CookieAuth:
+          - sysadmin
+          - admin
+          - writer
+          - reader
+
+paths:
+  /api/auth/signup:
+    post:
+      tags: ["auth"]
+      summary: サインアップ
+      description: 新規ユーザーを登録します
+      operationId: signup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: ユーザー名
+                  example: user1
+                password:
+                  type: string
+                  description: パスワード
+                  example: password123
+                roles:
+                  type: string
+                  description: ロール
+                  example: writer
+                  enum:
+                    - reader
+                    - writer
+                    - admin
+                    - sysadmin
+                  default: reader
+              description: ユーザー登録リクエスト
+              required:
+                - username
+                - password
+        required: true
+      responses:
+        "400":
+          description: 無効なユーザー名またはパスワード
+          content:
+            "application/json":
+              schema:
+                type: string
+        "200":
+          description: ログイン成功
+          content:
+            "application/json":
+              schema:
+                type: string
+
+  /api/auth/login:
+    post:
+      tags: ["auth"]
+      summary: ログイン
+      description: ユーザー名とパスワードでログインし、JWTトークンを取得します
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: ユーザー名
+                  example: user1
+                password:
+                  type: string
+                  description: パスワード
+                  example: password123
+              description: ログインリクエスト
+              required:
+                - username
+                - password
+        required: true
+      responses:
+        "400":
+          description: 無効なユーザー名またはパスワード
+          content:
+            "application/json":
+              schema:
+                type: string
+        "401":
+          description: ユーザー名またはパスワードが不一致
+          content:
+            "application/json":
+              schema:
+                type: string
+        "200":
+          description: ログイン成功
+          content:
+            "application/json":
+              schema:
+                type: string
+
+  /api/auth/logout:
+    post:
+      tags: ["auth"]
+      security: *ReaderRequired
+      summary: ログアウト
+      description: 現在のセッションを破棄します
+      operationId: logout
+      responses:
+        "200":
+          description: ログアウト成功
+          content:
+            "application/json":
+              schema:
+                type: string
+        "400":
+          description: セッションが無効
+          content:
+            "application/json":
+              schema:
+                type: string
+
+  /pets:
+    get:
+      summary: Returns all pets
+      description: |
+        Returns all pets from the system that the user has access to
+        Nam sed condimentum est. Maecenas tempor sagittis sapien, nec rhoncus sem sagittis sit amet. Aenean at gravida augue, ac iaculis sem. Curabitur odio lorem, ornare eget elementum nec, cursus id lectus. Duis mi turpis, pulvinar ac eros ac, tincidunt varius justo. In hac habitasse platea dictumst. Integer at adipiscing ante, a sagittis ligula. Aenean pharetra tempor ante molestie imperdiet. Vivamus id aliquam diam. Cras quis velit non tortor eleifend sagittis. Praesent at enim pharetra urna volutpat venenatis eget eget mauris. In eleifend fermentum facilisis. Praesent enim enim, gravida ac sodales sed, placerat id erat. Suspendisse lacus dolor, consectetur non augue vel, vehicula interdum libero. Morbi euismod sagittis libero sed lacinia.
+
+        Sed tempus felis lobortis leo pulvinar rutrum. Nam mattis velit nisl, eu condimentum ligula luctus nec. Phasellus semper velit eget aliquet faucibus. In a mattis elit. Phasellus vel urna viverra, condimentum lorem id, rhoncus nibh. Ut pellentesque posuere elementum. Sed a varius odio. Morbi rhoncus ligula libero, vel eleifend nunc tristique vitae. Fusce et sem dui. Aenean nec scelerisque tortor. Fusce malesuada accumsan magna vel tempus. Quisque mollis felis eu dolor tristique, sit amet auctor felis gravida. Sed libero lorem, molestie sed nisl in, accumsan tempor nisi. Fusce sollicitudin massa ut lacinia mattis. Sed vel eleifend lorem. Pellentesque vitae felis pretium, pulvinar elit eu, euismod sapien.
+      operationId: findPets
+      parameters:
+        - name: tags
+          in: query
+          description: tags to filter by
+          required: false
+          style: form
+          schema:
+            type: array
+            items:
+              type: string
+        - name: limit
+          in: query
+          description: maximum number of results to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: pet response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Pet"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Creates a new pet
+      description: Creates a new pet in the store. Duplicates are allowed
+      operationId: addPet
+      requestBody:
+        description: Pet to add to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewPet"
+      responses:
+        "200":
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pets/{id}:
+    get:
+      summary: Returns a pet by ID
+      description: Returns a pet based on a single ID
+      operationId: findPetByID
+      parameters:
+        - name: id
+          in: path
+          description: ID of pet to fetch
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Deletes a pet by ID
+      security: *AdminRequired
+      description: deletes a single pet based on the ID supplied
+      operationId: deletePet
+      parameters:
+        - name: id
+          in: path
+          description: ID of pet to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: pet deleted
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Pet:
+      allOf:
+        - $ref: "#/components/schemas/NewPet"
+        - required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: Unique id of the pet
+
+    NewPet:
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the pet
+        tag:
+          type: string
+          description: Type of the pet
+
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: ユーザー名
+          example: user1
+        password:
+          type: string
+          description: パスワード
+          example: password123
+      description: ログインリクエスト
+
+    LogoutRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: ユーザー名
+          example: user1
+        password:
+          type: string
+          description: パスワード
+          example: password123
+      description: ログインリクエスト
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: session

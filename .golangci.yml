@@ -1,0 +1,27 @@
+linters:
+  enable:
+    - exhaustive
+    - exhaustruct
+    - gochecksumtype
+
+linters-settings:
+  exhaustive:
+    # Program elements to check for exhaustiveness.
+    # Default: [ switch ]
+    check:
+      - switch
+      - map
+    # Presence of "default" case in switch statements satisfies exhaustiveness,
+    # even if all enum members are not listed.
+    # Default: false
+    default-signifies-exhaustive: false
+  gochecksumtype:
+    # Presence of `default` case in switch statements satisfies exhaustiveness, if all members are not listed.
+    # Default: true
+    default-signifies-exhaustive: false
+
+issues:
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA9003:"
